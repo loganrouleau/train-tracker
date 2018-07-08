@@ -1,3 +1,5 @@
+package com.loganrouleau.traintracker;
+
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -62,59 +64,42 @@ public class Controller {
     private ScheduledExecutorService timer;
     private boolean cameraActive = false;
     private Mat prevFrame = null;
-    private String file;
-    private BufferedWriter out;
+    private BufferedWriter bufferedWriter;
     private MediaPlayer mediaPlayer;
-    private VideoCapture capture = new VideoCapture();
+    private VideoCapture capture;
 
     @FXML
     public void initialize() {
         try {
-            out = new BufferedWriter(new FileWriter("output.txt"));
+            bufferedWriter = new BufferedWriter(new FileWriter("output.txt"));
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        Media sound = new Media(Paths.get("resources/camera-click.wav").toUri().toString());
+        Media sound = new Media(Paths.get("C:\\Users\\lroul\\projects\\train-tracker\\src\\main\\resources\\camera-click.wav").toUri().toString());
         mediaPlayer = new MediaPlayer(sound);
-
-        updateImage();
-    }
-
-    public void onMouseClick() {
-        updateImage();
-    }
-
-    private void updateImage() {
-        if (cameraActive) {
-            return;
-        }
-
-        capture.open(Config.CAMERA_ID);
+        capture = new VideoCapture();
         capture.set(CV_CAP_PROP_FRAME_WIDTH, 1280);
         capture.set(CV_CAP_PROP_FRAME_HEIGHT, 720);
 
-        if (capture.isOpened()) {
-            Mat frame = grabFrame();
+        updateImage();
+    }
 
-            if (x1Text.getText().length() > 0) {
-                int x1 = Integer.parseInt(x1Text.getText());
-                int x2 = Integer.parseInt(x2Text.getText());
-                int y1 = Integer.parseInt(y1Text.getText());
-                int y2 = Integer.parseInt(y2Text.getText());
-                Imgproc.rectangle(frame, new Point(x1, y1), new Point(x2, y2), new Scalar(0, 255, 0), 5);
-            }
+    @FXML
+    public void onMouseClicked() {
+        updateImage();
+    }
 
-            Image imageToShow = Utils.mat2Image(frame);
-            updateImageView(imageView, imageToShow);
-        }
+    @FXML
+    public void onMouseMoved(MouseEvent mouseEvent) {
+        label.setText("x: " + mouseEvent.getX() + " y: " + mouseEvent.getY());
     }
 
     /**
      * The action triggered by pushing the button on the GUI
      */
     @FXML
-    protected void startCamera() {
+    protected void onCaptureButton() {
         // If already active, stop the capture
         if (cameraActive) {
             cameraActive = false;
@@ -122,13 +107,12 @@ public class Controller {
             stopAcquisition();
             return;
         }
-
         capture.open(Config.CAMERA_ID);
         capture.set(CV_CAP_PROP_FRAME_WIDTH, 1280);
         capture.set(CV_CAP_PROP_FRAME_HEIGHT, 720);
 
         try {
-            Thread.sleep(250);
+            Thread.sleep(100);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -140,11 +124,25 @@ public class Controller {
         Rect captureBox = new Rect(x1, y1, (x2 - x1), (y2 - y1));
 
         Runnable frameGrabber = () -> {
-            Mat currFrame = grabFrame();
+            Mat currFrame = new Mat();
+            String fileName = null;
+
+            if (capture.isOpened()) {
+                try {
+                    capture.read(currFrame);
+
+                    String imageFile = LocalDateTime.now()
+                            .format(DateTimeFormatter.ofPattern(Config.TIMESTAMP_FORMAT));
+                    fileName = Config.IMAGE_OUTPUT_DIRECTORY + imageFile + "." + Config.IMAGE_EXTENSION;
+                } catch (Exception e) {
+                    System.err.println("Exception during the image elaboration: " + e);
+                }
+            }
+
             Imgproc.cvtColor(currFrame, currFrame, Imgproc.COLOR_BGR2GRAY);
             currFrame = currFrame.submat(captureBox);
 
-            if (prevFrame == null || prevFrame.height() != currFrame.height() || prevFrame.width() != currFrame.width()) {
+            if (prevFrame == null || !prevFrame.size().equals(currFrame.size())) {
                 prevFrame = currFrame;
                 return;
             }
@@ -152,18 +150,16 @@ public class Controller {
             Mat diffFrame = new Mat();
             Core.absdiff(currFrame, prevFrame, diffFrame);
 
-            Imgcodecs.imwrite(file, currFrame);
+            Imgcodecs.imwrite(fileName, currFrame);
             mediaPlayer.stop();
             mediaPlayer.play();
-
-            //Imgproc.resize(frame, frame, new Size(1280, 720));
 
             Moments moments = Imgproc.moments(diffFrame);
             double diffFrameIntensitySum = moments.m00;
             Point centroid = new Point(moments.m10 / diffFrameIntensitySum, moments.m01 / diffFrameIntensitySum);
 
             Platform.runLater(() -> motionLabel.setText("Diff sum: " + diffFrameIntensitySum));
-            Utils.writeLine(out, file, diffFrameIntensitySum, centroid.x, centroid.y);
+            Utils.writeLine(bufferedWriter, fileName, diffFrameIntensitySum, centroid.x, centroid.y);
 
             Core.bitwise_not(diffFrame, diffFrame);
 
@@ -184,27 +180,38 @@ public class Controller {
         captureButton.setText("Stop Camera");
     }
 
-    /**
-     * Get a frame from the opened video stream (if any)
-     */
-    private Mat grabFrame() {
+    private void updateImage() {
+        if (cameraActive) {
+            return;
+        }
+        capture.open(Config.CAMERA_ID);
+        capture.set(CV_CAP_PROP_FRAME_WIDTH, 1280);
+        capture.set(CV_CAP_PROP_FRAME_HEIGHT, 720);
+
         Mat frame = new Mat();
-
-        if (capture.isOpened()) {
-            try {
-                capture.read(frame);
-                if (!frame.empty()) {
-                    String imageFile = LocalDateTime.now()
-                            .format(DateTimeFormatter.ofPattern(Config.TIMESTAMP_FORMAT));
-                    file = Config.IMAGE_OUTPUT_DIRECTORY + imageFile + "." + Config.IMAGE_EXTENSION;
-                }
-
-            } catch (Exception e) {
-                System.err.println("Exception during the image elaboration: " + e);
-            }
+        try {
+            capture.read(frame);
+        } catch (Exception e) {
+            System.err.println("Exception during the image elaboration: " + e);
         }
 
-        return frame;
+        if (x1Text.getText().length() > 0) {
+            int x1 = Integer.parseInt(x1Text.getText());
+            int x2 = Integer.parseInt(x2Text.getText());
+            int y1 = Integer.parseInt(y1Text.getText());
+            int y2 = Integer.parseInt(y2Text.getText());
+            Imgproc.rectangle(frame, new Point(x1, y1), new Point(x2, y2), new Scalar(0, 255, 0), 5);
+        }
+
+        Image imageToShow = Utils.mat2Image(frame);
+        updateImageView(imageView, imageToShow);
+    }
+
+    /**
+     * Update the {@link ImageView} in the JavaFX main thread
+     */
+    private void updateImageView(ImageView view, Image image) {
+        Utils.onFXThread(view.imageProperty(), image);
     }
 
     /**
@@ -225,27 +232,16 @@ public class Controller {
     }
 
     /**
-     * Update the {@link ImageView} in the JavaFX main thread
-     */
-    private void updateImageView(ImageView view, Image image) {
-        Utils.onFXThread(view.imageProperty(), image);
-    }
-
-    /**
      * On application close, stop the acquisition from the camera
      */
-    public void setClosed() {
+    public void onWindowCloseRequest() {
         try {
-            out.close();
+            bufferedWriter.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
         mediaPlayer.stop();
         stopAcquisition();
-    }
-
-    public void showCoordinates(MouseEvent mouseEvent) {
-        label.setText("x: " + mouseEvent.getX() + " y: " + mouseEvent.getY());
     }
 
 }

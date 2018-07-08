@@ -1,3 +1,5 @@
+package com.loganrouleau.traintracker;
+
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.io.BufferedWriter;

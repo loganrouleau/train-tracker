@@ -1,3 +1,5 @@
+package com.loganrouleau.traintracker;
+
 import java.io.FileInputStream;
 import java.util.Properties;
 

@@ -1,9 +1,13 @@
+package com.loganrouleau.traintracker;
+
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import org.opencv.core.Core;
+
+import java.net.URL;
 
 /**
  * The main class for a JavaFX application. It creates and handle the main
@@ -14,7 +18,7 @@ public class Main extends Application {
     @Override
     public void start(Stage primaryStage) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("train-tracker.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/train-tracker.fxml"));
             // store the root element so that the controllers can use it
             BorderPane rootElement = loader.load();
 
@@ -23,12 +27,11 @@ public class Main extends Application {
             primaryStage.setTitle("Train Tracker");
             primaryStage.setScene(scene);
             primaryStage.setMaximized(true);
-            // show the GUI
             primaryStage.show();
 
             // set the proper behavior on closing the application
             Controller controller = loader.getController();
-            primaryStage.setOnCloseRequest((windowEvent -> controller.setClosed()));
+            primaryStage.setOnCloseRequest((windowEvent -> controller.onWindowCloseRequest()));
         } catch (Exception e) {
             e.printStackTrace();
         }

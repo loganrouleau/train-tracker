@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+
+<BorderPane prefHeight="1600.0" prefWidth="3000.0" xmlns="http://javafx.com/javafx/8"
+            xmlns:fx="http://javafx.com/fxml/1" fx:controller="Controller">
+    <bottom>
+        <HBox alignment="center">
+            <padding>
+                <Insets bottom="25" left="25" right="25" top="25"/>
+            </padding>
+            <children>
+                <Button fx:id="captureButton" alignment="center" onAction="#startCamera" text="Start Camera"/>
+                <Label fx:id="motionLabel" text="Label">
+                    <HBox.margin>
+                        <Insets left="10.0" right="10.0"/>
+                    </HBox.margin>
+                </Label>
+                <Label fx:id="label" text="Label">
+                    <HBox.margin>
+                        <Insets right="10.0"/>
+                    </HBox.margin>
+                </Label>
+                <TextField prefHeight="25.0" prefWidth="70.0" promptText="x1" text="100" fx:id="x1Text"/>
+                <TextField fx:id="y1Text" prefHeight="25.0" prefWidth="70.0" promptText="y1" text="100"/>
+                <TextField prefHeight="25.0" prefWidth="70.0" promptText="x2" text="1000" fx:id="x2Text"/>
+                <TextField fx:id="y2Text" prefHeight="25.0" prefWidth="70.0" promptText="y2" text="700"/>
+            </children>
+        </HBox>
+    </bottom>
+    <center>
+        <ImageView fx:id="imageView" onMouseClicked="#onMouseClick" onMouseMoved="#showCoordinates"/>
+    </center>
+</BorderPane>

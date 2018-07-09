@@ -4,6 +4,7 @@ import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.Slider;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -46,6 +47,8 @@ public class Controller {
 
     @FXML
     private Button captureButton;
+    @FXML
+    private Slider thresholdSlider;
     @FXML
     private ImageView imageView;
     @FXML
@@ -149,6 +152,7 @@ public class Controller {
 
             Mat diffFrame = new Mat();
             Core.absdiff(currFrame, prevFrame, diffFrame);
+            Imgproc.threshold(diffFrame,diffFrame, thresholdSlider.getValue(),255,Imgproc.THRESH_BINARY);
 
             Imgcodecs.imwrite(fileName, currFrame);
             mediaPlayer.stop();

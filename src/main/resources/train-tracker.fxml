@@ -7,6 +7,7 @@
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.control.Slider?>
 <BorderPane prefHeight="1600.0" prefWidth="3000.0" xmlns="http://javafx.com/javafx/8"
             xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.loganrouleau.traintracker.Controller">
     <bottom>
@@ -30,6 +31,12 @@
                 <TextField fx:id="y1Text" prefHeight="25.0" prefWidth="70.0" promptText="y1" text="100"/>
                 <TextField fx:id="x2Text" prefHeight="25.0" prefWidth="70.0" promptText="x2" text="1000"/>
                 <TextField fx:id="y2Text" prefHeight="25.0" prefWidth="70.0" promptText="y2" text="700"/>
+                <Slider fx:id="thresholdSlider" blockIncrement="2.0" max="255.0" minorTickCount="10" prefWidth="140.0"
+                        showTickLabels="true" showTickMarks="true" value="20.0">
+                    <HBox.margin>
+                        <Insets left="10.0"/>
+                    </HBox.margin>
+                </Slider>
             </children>
         </HBox>
     </bottom>

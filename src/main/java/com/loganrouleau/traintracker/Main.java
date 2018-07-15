@@ -7,8 +7,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import org.opencv.core.Core;
 
-import java.net.URL;
-
 /**
  * The main class for a JavaFX application. It creates and handle the main
  * window with its resources (style, graphics, etc.).

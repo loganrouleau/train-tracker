@@ -18,6 +18,7 @@ import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
+import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.imgproc.Moments;
@@ -48,9 +49,15 @@ public class Controller {
     @FXML
     private Button captureButton;
     @FXML
+    private Button calibrateButton;
+    @FXML
     private Slider thresholdSlider;
     @FXML
+    private Slider detectionToleranceSlider;
+    @FXML
     private ImageView imageView;
+    @FXML
+    private Label statusLabel;
     @FXML
     private Label motionLabel;
     @FXML
@@ -66,6 +73,7 @@ public class Controller {
 
     private ScheduledExecutorService timer;
     private boolean cameraActive = false;
+    private boolean calibrating = false;
     private Mat prevFrame = null;
     private BufferedWriter bufferedWriter;
     private MediaPlayer mediaPlayer;
@@ -125,6 +133,10 @@ public class Controller {
         int y1 = Integer.parseInt(y1Text.getText());
         int y2 = Integer.parseInt(y2Text.getText());
         Rect captureBox = new Rect(x1, y1, (x2 - x1), (y2 - y1));
+        double xScaleFactor = 1280 / (double) captureBox.width;
+        double yScaleFactor = 720 / (double) captureBox.height;
+        System.out.println(xScaleFactor + "   " + yScaleFactor);
+        double scaleFactor = Math.min(xScaleFactor, yScaleFactor);
 
         Runnable frameGrabber = () -> {
             Mat currFrame = new Mat();
@@ -152,23 +164,35 @@ public class Controller {
 
             Mat diffFrame = new Mat();
             Core.absdiff(currFrame, prevFrame, diffFrame);
-            Imgproc.threshold(diffFrame,diffFrame, thresholdSlider.getValue(),255,Imgproc.THRESH_BINARY);
+            Imgproc.threshold(diffFrame, diffFrame, thresholdSlider.getValue(), 255, Imgproc.THRESH_BINARY);
 
-            Imgcodecs.imwrite(fileName, currFrame);
-            mediaPlayer.stop();
-            mediaPlayer.play();
+            if (!calibrating) {
+                Imgcodecs.imwrite(fileName, currFrame);
+                mediaPlayer.stop();
+                mediaPlayer.play();
+            }
 
             Moments moments = Imgproc.moments(diffFrame);
             double diffFrameIntensitySum = moments.m00;
             Point centroid = new Point(moments.m10 / diffFrameIntensitySum, moments.m01 / diffFrameIntensitySum);
+            if (diffFrameIntensitySum > detectionToleranceSlider.getValue()) {
+                Platform.runLater(() -> statusLabel.setText("Train detected!"));
+            } else {
+                Platform.runLater(() -> statusLabel.setText(""));
+            }
 
             Platform.runLater(() -> motionLabel.setText("Diff sum: " + diffFrameIntensitySum));
-            Utils.writeLine(bufferedWriter, fileName, diffFrameIntensitySum, centroid.x, centroid.y);
+
+            if (!calibrating) {
+                Utils.writeLine(bufferedWriter, fileName, diffFrameIntensitySum, centroid.x, centroid.y);
+            }
 
             Core.bitwise_not(diffFrame, diffFrame);
 
             Mat displayFrame = new Mat();
             Imgproc.cvtColor(diffFrame, displayFrame, COLOR_GRAY2BGR);
+            Imgproc.resize(displayFrame, displayFrame, new Size(scaleFactor * displayFrame.width(), scaleFactor * displayFrame.height()));
+            centroid.set(new double[]{scaleFactor * centroid.x, scaleFactor * centroid.y});
             Imgproc.circle(displayFrame, centroid, 3, new Scalar(0, 0, 255), 4);
             Image imageToShow = Utils.mat2Image(displayFrame);
             updateImageView(imageView, imageToShow);
@@ -182,6 +206,12 @@ public class Controller {
 
         cameraActive = true;
         captureButton.setText("Stop Camera");
+    }
+
+    @FXML
+    public void onCalibrate() {
+        calibrating = !calibrating;
+        calibrateButton.setText(calibrating ? "Stop" : "Calibrate");
     }
 
     private void updateImage() {

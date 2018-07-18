@@ -74,6 +74,7 @@ public class Controller {
     private ScheduledExecutorService timer;
     private boolean cameraActive = false;
     private boolean calibrating = false;
+    private boolean trainDetected = false;
     private Mat prevFrame = null;
     private BufferedWriter bufferedWriter;
     private MediaPlayer mediaPlayer;
@@ -176,15 +177,18 @@ public class Controller {
             double diffFrameIntensitySum = moments.m00;
             Point centroid = new Point(moments.m10 / diffFrameIntensitySum, moments.m01 / diffFrameIntensitySum);
             if (diffFrameIntensitySum > detectionToleranceSlider.getValue()) {
+                trainDetected = true;
                 Platform.runLater(() -> statusLabel.setText("Train detected!"));
             } else {
+                trainDetected = false;
                 Platform.runLater(() -> statusLabel.setText(""));
             }
 
             Platform.runLater(() -> motionLabel.setText("Diff sum: " + diffFrameIntensitySum));
 
             if (!calibrating) {
-                Utils.writeLine(bufferedWriter, fileName, diffFrameIntensitySum, centroid.x, centroid.y);
+                // TODO: Use log4j2 logging
+                Utils.writeLine(bufferedWriter, fileName, diffFrameIntensitySum, trainDetected, centroid.x, centroid.y);
             }
 
             Core.bitwise_not(diffFrame, diffFrame);

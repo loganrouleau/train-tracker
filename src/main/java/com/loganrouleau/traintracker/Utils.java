@@ -63,11 +63,12 @@ public final class Utils {
         return image;
     }
 
-    public static void writeLine(BufferedWriter writer, String timestamp, double metric, boolean detected,
-                                 double x_cent, double y_cent) {
+    public static void writeLine(BufferedWriter writer, String timestamp, double metric, boolean detected, int frames,
+                                 double x_cent, double y_cent, boolean centroids) {
         try {
             writer.write(timestamp + "," + String.valueOf(metric) + ", " + String.valueOf(detected) + ", " +
-                    String.valueOf(x_cent) + "," + String.valueOf(y_cent));
+                    String.valueOf(frames) + ", " + String.valueOf(x_cent) + "," + String.valueOf(y_cent) + ", " +
+                    String.valueOf(centroids));
             writer.newLine();
         } catch (IOException e) {
             e.printStackTrace();

@@ -30,6 +30,8 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -75,6 +77,9 @@ public class Controller {
     private boolean cameraActive = false;
     private boolean calibrating = false;
     private boolean trainDetected = false;
+    private boolean trackingCentroids = false;
+    private List<Double> centroidList = new ArrayList<>();
+    private int trainDetectedFrames = 0;
     private Mat prevFrame = null;
     private BufferedWriter bufferedWriter;
     private MediaPlayer mediaPlayer;
@@ -167,28 +172,62 @@ public class Controller {
             Core.absdiff(currFrame, prevFrame, diffFrame);
             Imgproc.threshold(diffFrame, diffFrame, thresholdSlider.getValue(), 255, Imgproc.THRESH_BINARY);
 
-            if (!calibrating) {
+            Moments moments = Imgproc.moments(diffFrame);
+            double diffFrameIntensitySum = moments.m00;
+            Point centroid = new Point(moments.m10 / diffFrameIntensitySum, moments.m01 / diffFrameIntensitySum);
+
+            if (diffFrameIntensitySum > detectionToleranceSlider.getValue()) {
+                trainDetected = true;
+                if (!calibrating) {
+                    trainDetectedFrames = Math.min(trainDetectedFrames + 1, 3);
+                    if (!trackingCentroids && trainDetectedFrames == 3) {
+                        trackingCentroids = true;
+                    }
+                }
+                Platform.runLater(() -> statusLabel.setText("Train detected!"));
+            } else {
+                trainDetected = false;
+                if (!calibrating) {
+                    trainDetectedFrames = Math.max(trainDetectedFrames - 1, 0);
+                    if (trackingCentroids && trainDetectedFrames == 0) {
+                        // calculate direction
+                        int direction = 0;
+                        for (int i = 1; i < centroidList.size(); i++) {
+                            if (Double.isNaN(centroidList.get(i - 1)) || Double.isNaN(centroidList.get(i))) {
+                                System.out.println(fileName + ": skipping NaN calc");
+                                continue;
+                            }
+                            if (centroidList.get(i) > centroidList.get(i - 1)) {
+                                direction++;
+                            } else {
+                                direction--;
+                            }
+                        }
+                        String dir = direction > 0 ? "East" : "West";
+                        System.out.println(fileName + ": Train detected moving " + dir);
+                        trackingCentroids = false;
+                        centroidList = new ArrayList<>();
+                    }
+                }
+                Platform.runLater(() -> statusLabel.setText(""));
+            }
+
+            if (!calibrating && trackingCentroids) {
+                centroidList.add(centroid.x);
+            }
+
+            // TODO: Remove util helper method for runLater
+            Platform.runLater(() -> motionLabel.setText("Diff sum: " + diffFrameIntensitySum));
+
+            if (!calibrating && trainDetected) {
                 Imgcodecs.imwrite(fileName, currFrame);
                 mediaPlayer.stop();
                 mediaPlayer.play();
             }
 
-            Moments moments = Imgproc.moments(diffFrame);
-            double diffFrameIntensitySum = moments.m00;
-            Point centroid = new Point(moments.m10 / diffFrameIntensitySum, moments.m01 / diffFrameIntensitySum);
-            if (diffFrameIntensitySum > detectionToleranceSlider.getValue()) {
-                trainDetected = true;
-                Platform.runLater(() -> statusLabel.setText("Train detected!"));
-            } else {
-                trainDetected = false;
-                Platform.runLater(() -> statusLabel.setText(""));
-            }
-
-            Platform.runLater(() -> motionLabel.setText("Diff sum: " + diffFrameIntensitySum));
-
             if (!calibrating) {
                 // TODO: Use log4j2 logging
-                Utils.writeLine(bufferedWriter, fileName, diffFrameIntensitySum, trainDetected, centroid.x, centroid.y);
+                Utils.writeLine(bufferedWriter, fileName, diffFrameIntensitySum, trainDetected, trainDetectedFrames, centroid.x, centroid.y, trackingCentroids);
             }
 
             Core.bitwise_not(diffFrame, diffFrame);

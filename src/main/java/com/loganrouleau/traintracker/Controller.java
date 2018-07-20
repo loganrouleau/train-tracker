@@ -24,9 +24,6 @@ import org.opencv.imgproc.Imgproc;
 import org.opencv.imgproc.Moments;
 import org.opencv.videoio.VideoCapture;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -81,18 +78,11 @@ public class Controller {
     private List<Double> centroidList = new ArrayList<>();
     private int trainDetectedFrames = 0;
     private Mat prevFrame = null;
-    private BufferedWriter bufferedWriter;
     private MediaPlayer mediaPlayer;
     private VideoCapture capture;
 
     @FXML
     public void initialize() {
-        try {
-            bufferedWriter = new BufferedWriter(new FileWriter("output.txt"));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
         Media sound = new Media(Paths.get("C:\\Users\\lroul\\projects\\train-tracker\\src\\main\\resources\\camera-click.wav").toUri().toString());
         mediaPlayer = new MediaPlayer(sound);
         capture = new VideoCapture();
@@ -131,7 +121,7 @@ public class Controller {
         try {
             Thread.sleep(100);
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            LOG.warn("Capture interrupted: " + e);
         }
 
         int x1 = Integer.parseInt(x1Text.getText());
@@ -141,7 +131,7 @@ public class Controller {
         Rect captureBox = new Rect(x1, y1, (x2 - x1), (y2 - y1));
         double xScaleFactor = 1280 / (double) captureBox.width;
         double yScaleFactor = 720 / (double) captureBox.height;
-        System.out.println(xScaleFactor + "   " + yScaleFactor);
+        LOG.info(xScaleFactor + "   " + yScaleFactor);
         double scaleFactor = Math.min(xScaleFactor, yScaleFactor);
 
         Runnable frameGrabber = () -> {
@@ -156,7 +146,7 @@ public class Controller {
                             .format(DateTimeFormatter.ofPattern(Config.TIMESTAMP_FORMAT));
                     fileName = Config.IMAGE_OUTPUT_DIRECTORY + imageFile + "." + Config.IMAGE_EXTENSION;
                 } catch (Exception e) {
-                    System.err.println("Exception during the image elaboration: " + e);
+                    LOG.warn("Exception during the image elaboration: " + e);
                 }
             }
 
@@ -194,7 +184,7 @@ public class Controller {
                         int direction = 0;
                         for (int i = 1; i < centroidList.size(); i++) {
                             if (Double.isNaN(centroidList.get(i - 1)) || Double.isNaN(centroidList.get(i))) {
-                                System.out.println(fileName + ": skipping NaN calc");
+                                LOG.debug(fileName + ": skipping NaN calc");
                                 continue;
                             }
                             if (centroidList.get(i) > centroidList.get(i - 1)) {
@@ -204,7 +194,7 @@ public class Controller {
                             }
                         }
                         String dir = direction > 0 ? "East" : "West";
-                        System.out.println(fileName + ": Train detected moving " + dir);
+                        LOG.info(fileName + ": Train detected moving " + dir);
                         trackingCentroids = false;
                         centroidList = new ArrayList<>();
                     }
@@ -226,8 +216,10 @@ public class Controller {
             }
 
             if (!calibrating) {
-                // TODO: Use log4j2 logging
-                Utils.writeLine(bufferedWriter, fileName, diffFrameIntensitySum, trainDetected, trainDetectedFrames, centroid.x, centroid.y, trackingCentroids);
+                LOG.debug(fileName + "," + String.valueOf(diffFrameIntensitySum) + ", " +
+                        String.valueOf(trainDetected) + ", " + String.valueOf(trainDetectedFrames) + ", " +
+                        String.valueOf(centroid.x) + "," + String.valueOf(centroid.y) + ", " +
+                        String.valueOf(trackingCentroids));
             }
 
             Core.bitwise_not(diffFrame, diffFrame);
@@ -269,7 +261,7 @@ public class Controller {
         try {
             capture.read(frame);
         } catch (Exception e) {
-            System.err.println("Exception during the image elaboration: " + e);
+            LOG.warn("Exception during the image elaboration: " + e);
         }
 
         if (x1Text.getText().length() > 0) {
@@ -299,7 +291,7 @@ public class Controller {
             try {
                 timer.shutdownNow();
             } catch (SecurityException e) {
-                System.err.println("Exception in stopping the frame capture, trying to release the camera now... " + e);
+                LOG.warn("Exception in stopping the frame capture, trying to release the camera now... " + e);
             }
         }
 
@@ -312,11 +304,6 @@ public class Controller {
      * On application close, stop the acquisition from the camera
      */
     public void onWindowCloseRequest() {
-        try {
-            bufferedWriter.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
         mediaPlayer.stop();
         stopAcquisition();
     }

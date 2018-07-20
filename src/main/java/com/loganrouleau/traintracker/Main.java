@@ -5,6 +5,8 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.opencv.core.Core;
 
 /**
@@ -12,6 +14,7 @@ import org.opencv.core.Core;
  * window with its resources (style, graphics, etc.).
  */
 public class Main extends Application {
+    private static final Logger LOG = LogManager.getLogger(Main.class);
 
     @Override
     public void start(Stage primaryStage) {
@@ -31,13 +34,15 @@ public class Main extends Application {
             Controller controller = loader.getController();
             primaryStage.setOnCloseRequest((windowEvent -> controller.onWindowCloseRequest()));
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error("Error starting application: " + e);
         }
     }
 
     public static void main(String[] args) {
+        LOG.info("Entering main");
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
         Config.loadProperties();
         launch(args);
+        LOG.info("Exiting main");
     }
 }

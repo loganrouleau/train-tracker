@@ -2,5 +2,7 @@
 *.iml
 out
 lib
+logs
 images
+*.log
 *.txt

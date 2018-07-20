@@ -1,22 +1,23 @@
 package com.loganrouleau.traintracker;
 
-import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferByte;
-import java.io.BufferedWriter;
-import java.io.IOException;
-
-import org.opencv.core.Mat;
-
 import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.Image;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.opencv.core.Mat;
+
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferByte;
 
 /**
  * Provide general purpose methods for handling OpenCV-JavaFX data conversion.
  * Moreover, expose some "low level" methods for matching few JavaFX behavior.
  */
 public final class Utils {
+    private static final Logger LOG = LogManager.getLogger(Utils.class);
+
     /**
      * Convert a Mat object (OpenCV) in the corresponding Image for JavaFX
      */
@@ -24,7 +25,7 @@ public final class Utils {
         try {
             return SwingFXUtils.toFXImage(matToBufferedImage(frame), null);
         } catch (Exception e) {
-            System.err.println("Cannot convert the Mat object: " + e);
+            LOG.warn("Cannot convert the Mat object: " + e);
             return null;
         }
     }
@@ -61,17 +62,5 @@ public final class Utils {
         System.arraycopy(sourcePixels, 0, targetPixels, 0, sourcePixels.length);
 
         return image;
-    }
-
-    public static void writeLine(BufferedWriter writer, String timestamp, double metric, boolean detected, int frames,
-                                 double x_cent, double y_cent, boolean centroids) {
-        try {
-            writer.write(timestamp + "," + String.valueOf(metric) + ", " + String.valueOf(detected) + ", " +
-                    String.valueOf(frames) + ", " + String.valueOf(x_cent) + "," + String.valueOf(y_cent) + ", " +
-                    String.valueOf(centroids));
-            writer.newLine();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 }

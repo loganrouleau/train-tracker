@@ -1,9 +1,14 @@
 package com.loganrouleau.traintracker;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.FileInputStream;
 import java.util.Properties;
 
 public class Config {
+    private static final Logger LOG = LogManager.getLogger(Config.class);
+
     public static double CAPTURE_DURATION_MINUTES;
     public static int FRAMES_PER_SECOND;
     public static String IMAGE_OUTPUT_DIRECTORY;
@@ -19,7 +24,7 @@ public class Config {
             properties.load(in);
             in.close();
         } catch (java.io.IOException e) {
-            e.printStackTrace();
+            LOG.error("Unable to read in properties: " + e);
         }
 
         CAPTURE_DURATION_MINUTES = Double.parseDouble(properties.getProperty("capture.duration.minutes"));

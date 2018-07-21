@@ -28,10 +28,11 @@
                         <Insets right="10.0"/>
                     </HBox.margin>
                 </Label>
-                <TextField fx:id="x1Text" prefHeight="25.0" prefWidth="70.0" promptText="x1" text="100"/>
-                <TextField fx:id="y1Text" prefHeight="25.0" prefWidth="70.0" promptText="y1" text="100"/>
-                <TextField fx:id="x2Text" prefHeight="25.0" prefWidth="70.0" promptText="x2" text="1000"/>
-                <TextField fx:id="y2Text" prefHeight="25.0" prefWidth="70.0" promptText="y2" text="700"/>
+                <TextField fx:id="x1Text" prefHeight="25.0" prefWidth="70.0" promptText="x1" text="0"/>
+                <TextField fx:id="y1Text" prefHeight="25.0" prefWidth="70.0" promptText="y1" text="0"/>
+                <!-- TODO: Don't hardcode these magic numbers here -->
+                <TextField fx:id="x2Text" prefHeight="25.0" prefWidth="70.0" promptText="x2" text="1280"/>
+                <TextField fx:id="y2Text" prefHeight="25.0" prefWidth="70.0" promptText="y2" text="720"/>
                 <Slider fx:id="thresholdSlider" blockIncrement="2.0" majorTickUnit="50.0" max="255.0" minorTickCount="1"
                         prefWidth="140.0" showTickLabels="true" showTickMarks="true" value="20.0">
                     <HBox.margin>

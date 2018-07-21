@@ -1,7 +1,5 @@
 package com.loganrouleau.traintracker;
 
-import javafx.application.Platform;
-import javafx.beans.property.ObjectProperty;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.Image;
 import org.apache.logging.log4j.LogManager;
@@ -28,16 +26,6 @@ public final class Utils {
             LOG.warn("Cannot convert the Mat object: " + e);
             return null;
         }
-    }
-
-    /**
-     * Generic method for putting element running on a non-JavaFX thread on the
-     * JavaFX thread, to properly update the UI
-     */
-    public static <T> void onFXThread(final ObjectProperty<T> property, final T value) {
-        Platform.runLater(() -> {
-            property.set(value);
-        });
     }
 
     /**

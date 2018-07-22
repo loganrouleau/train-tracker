@@ -4,5 +4,6 @@ out
 lib
 logs
 images
+results
 *.log
 *.txt

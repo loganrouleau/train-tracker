@@ -14,9 +14,12 @@ import org.opencv.imgproc.Imgproc;
 import org.opencv.imgproc.Moments;
 import org.opencv.videoio.VideoCapture;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Observable;
 import java.util.concurrent.Executors;
@@ -41,6 +44,7 @@ public class MotionDetector extends Observable {
     private Mat prevFrame = null;
     private Point point1;
     private Point point2;
+    FileWriter fileWriter;
 
     private double thresholdSliderValue;
     private double detectionToleranceSliderValue;
@@ -73,6 +77,15 @@ public class MotionDetector extends Observable {
         capture.open(Config.CAMERA_ID);
         capture.set(CV_CAP_PROP_FRAME_WIDTH, Config.DISPLAY_WIDTH_PIXELS);
         capture.set(CV_CAP_PROP_FRAME_HEIGHT, Config.DISPLAY_HEIGHT_PIXELS);
+
+        try {
+            fileWriter = new FileWriter("C:\\Users\\lroul\\projects\\train-tracker\\results\\" +
+                    LocalDateTime.now().format(DateTimeFormatter.ofPattern(Config.TIMESTAMP_FORMAT)) + ".csv");
+            Utils.writeResultLine(fileWriter, Arrays.asList("Timestamp", "Direction", "Threshold Slider Value",
+                    "Detection Tolerance Slider Value"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         Rect captureBox = new Rect(point1, point2);
         double xScaleFactor = Config.DISPLAY_WIDTH_PIXELS / (double) captureBox.width;
@@ -158,6 +171,9 @@ public class MotionDetector extends Observable {
                     }
                     String dir = direction > 0 ? "East" : "West";
                     LOG.info(timestamp + ": Train detected moving " + dir);
+                    Utils.writeResultLine(fileWriter, Arrays.asList(timestamp, dir,
+                            String.valueOf(thresholdSliderValue), String.valueOf(detectionToleranceSliderValue)));
+
                     trackingCentroids = false;
                     centroidList = new ArrayList<>();
                 }
@@ -210,6 +226,12 @@ public class MotionDetector extends Observable {
             } catch (SecurityException e) {
                 LOG.warn("Exception in stopping the frame capture, trying to release the camera now... " + e);
             }
+        }
+
+        try {
+            fileWriter.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
         if (capture.isOpened()) {

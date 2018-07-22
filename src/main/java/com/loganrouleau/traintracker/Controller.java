@@ -25,6 +25,10 @@ import java.util.Observer;
 public class Controller implements Observer {
     private static final Logger LOG = LogManager.getLogger(Controller.class);
 
+    private MotionDetector motionDetector;
+    private MediaPlayer mediaPlayer;
+    private boolean cameraActive = false;
+
     @FXML
     private Button captureButton;
     @FXML
@@ -50,15 +54,16 @@ public class Controller implements Observer {
     @FXML
     private TextField y2Text;
 
-    private MotionDetector motionDetector;
-    private MediaPlayer mediaPlayer;
-
     @FXML
     public void initialize() {
         motionDetector = new MotionDetector();
         motionDetector.addObserver(this);
         Media sound = new Media(Paths.get("C:\\Users\\lroul\\projects\\train-tracker\\src\\main\\resources\\camera-click.wav").toUri().toString());
         mediaPlayer = new MediaPlayer(sound);
+        x1Text.setText(String.valueOf(0));
+        y1Text.setText(String.valueOf(0));
+        x2Text.setText(String.valueOf(Config.DISPLAY_WIDTH_PIXELS));
+        y2Text.setText(String.valueOf(Config.DISPLAY_HEIGHT_PIXELS));
         updateImage();
     }
 
@@ -72,45 +77,31 @@ public class Controller implements Observer {
         label.setText("x: " + mouseEvent.getX() + " y: " + mouseEvent.getY());
     }
 
-    /**
-     * The action triggered by pushing the button on the GUI
-     */
-    @FXML
-    protected void onCaptureButton() {
-        // TODO: duplicate method call
-        motionDetector.setBoundingBox(Integer.parseInt(x1Text.getText()), Integer.parseInt(y1Text.getText()),
-                Integer.parseInt(x2Text.getText()), Integer.parseInt(y2Text.getText()));
-        motionDetector.setThreshold(thresholdSlider.getValue());
-        motionDetector.setDetectionTolerance(detectionToleranceSlider.getValue());
-
-        // If already active, stop the capture
-        if (motionDetector.isCameraActive()) {
-            motionDetector.setCameraActive(false);
-            captureButton.setText("Start Camera");
-            motionDetector.stopAcquisition();
-            return;
-        }
-
-        motionDetector.capture();
-        motionDetector.setCameraActive(true);
-        captureButton.setText("Stop Camera");
-    }
-
     @FXML
     public void onCalibrate() {
         motionDetector.setCalibrating(!motionDetector.isCalibrating());
         calibrateButton.setText(motionDetector.isCalibrating() ? "Stop" : "Calibrate");
     }
 
-    private void updateImage() {
-        motionDetector.setBoundingBox(Integer.parseInt(x1Text.getText()), Integer.parseInt(y1Text.getText()),
-                Integer.parseInt(x2Text.getText()), Integer.parseInt(y2Text.getText()));
-
-        if (motionDetector.isCameraActive()) {
-            return;
+    /**
+     * The action triggered by pushing the button on the GUI
+     */
+    @FXML
+    protected void onCaptureButton() {
+        if (cameraActive) {
+            // If already active, stop the capture
+            cameraActive = false;
+            captureButton.setText("Start Camera");
+            motionDetector.stopAcquisition();
+        } else {
+            // Start capture
+            setBoundingBox();
+            motionDetector.setThreshold(thresholdSlider.getValue());
+            motionDetector.setDetectionTolerance(detectionToleranceSlider.getValue());
+            cameraActive = true;
+            captureButton.setText("Stop Camera");
+            motionDetector.capture();
         }
-
-        motionDetector.updateImageNew();
     }
 
     /**
@@ -119,6 +110,18 @@ public class Controller implements Observer {
     public void onWindowCloseRequest() {
         mediaPlayer.stop();
         motionDetector.stopAcquisition();
+    }
+
+    private void updateImage() {
+        if (!cameraActive) {
+            setBoundingBox();
+            motionDetector.showPreviewImage();
+        }
+    }
+
+    private void setBoundingBox() {
+        motionDetector.setBoundingBox(Integer.parseInt(x1Text.getText()), Integer.parseInt(y1Text.getText()),
+                Integer.parseInt(x2Text.getText()), Integer.parseInt(y2Text.getText()));
     }
 
     @Override
@@ -131,8 +134,10 @@ public class Controller implements Observer {
 
             if (frameData.isTrainDetected()) {
                 Platform.runLater(() -> statusLabel.setText("Train detected!"));
-                mediaPlayer.stop();
-                mediaPlayer.play();
+                if (Config.AUDIO_ENABLED) {
+                    mediaPlayer.stop();
+                    mediaPlayer.play();
+                }
             } else {
                 Platform.runLater(() -> statusLabel.setText(""));
             }

@@ -15,6 +15,9 @@ public class Config {
     public static String IMAGE_EXTENSION;
     public static String TIMESTAMP_FORMAT;
     public static int CAMERA_ID;
+    public static boolean AUDIO_ENABLED;
+    public static int DISPLAY_WIDTH_PIXELS;
+    public static int DISPLAY_HEIGHT_PIXELS;
 
     public static void loadProperties() {
         Properties properties = new Properties();
@@ -33,5 +36,8 @@ public class Config {
         IMAGE_EXTENSION = properties.getProperty("image.extension");
         TIMESTAMP_FORMAT = properties.getProperty("timestamp.format");
         CAMERA_ID = Integer.parseInt(properties.getProperty("camera.id"));
+        AUDIO_ENABLED = Boolean.parseBoolean(properties.getProperty("audio.enabled"));
+        DISPLAY_WIDTH_PIXELS = Integer.parseInt(properties.getProperty("display.width.pixels"));
+        DISPLAY_HEIGHT_PIXELS = Integer.parseInt(properties.getProperty("display.height.pixels"));
     }
 }

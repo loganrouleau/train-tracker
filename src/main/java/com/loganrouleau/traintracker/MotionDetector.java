@@ -30,8 +30,7 @@ import static org.opencv.videoio.Videoio.CV_CAP_PROP_FRAME_WIDTH;
 public class MotionDetector extends Observable {
     private static final Logger LOG = LogManager.getLogger(MotionDetector.class);
 
-    private VideoCapture capture;
-    private boolean cameraActive = false;
+    private VideoCapture capture = new VideoCapture();
     private boolean calibrating = false;
 
     private ScheduledExecutorService timer;
@@ -46,26 +45,15 @@ public class MotionDetector extends Observable {
     private double thresholdSliderValue;
     private double detectionToleranceSliderValue;
 
-    public MotionDetector() {
-        capture = new VideoCapture();
-        capture.set(CV_CAP_PROP_FRAME_WIDTH, 1280);
-        capture.set(CV_CAP_PROP_FRAME_HEIGHT, 720);
-    }
+    private final Scalar GREEN = new Scalar(0, 255, 0);
+    private final Scalar RED = new Scalar(0, 0, 255);
 
-    public void setCameraActive(boolean cameraActive) {
-        this.cameraActive = cameraActive;
-    }
-
-    public boolean isCameraActive() {
-        return cameraActive;
+    public boolean isCalibrating() {
+        return calibrating;
     }
 
     public void setCalibrating(boolean calibrating) {
         this.calibrating = calibrating;
-    }
-
-    public boolean isCalibrating() {
-        return calibrating;
     }
 
     public void setBoundingBox(int x1, int y1, int x2, int y2) {
@@ -83,34 +71,28 @@ public class MotionDetector extends Observable {
 
     public void capture() {
         capture.open(Config.CAMERA_ID);
-        capture.set(CV_CAP_PROP_FRAME_WIDTH, 1280);
-        capture.set(CV_CAP_PROP_FRAME_HEIGHT, 720);
-
-        try {
-            Thread.sleep(100);
-        } catch (InterruptedException e) {
-            LOG.warn("Capture interrupted: " + e);
-        }
+        capture.set(CV_CAP_PROP_FRAME_WIDTH, Config.DISPLAY_WIDTH_PIXELS);
+        capture.set(CV_CAP_PROP_FRAME_HEIGHT, Config.DISPLAY_HEIGHT_PIXELS);
 
         Rect captureBox = new Rect(point1, point2);
-        double xScaleFactor = 1280 / (double) captureBox.width;
-        double yScaleFactor = 720 / (double) captureBox.height;
-        LOG.info(xScaleFactor + "   " + yScaleFactor);
+        double xScaleFactor = Config.DISPLAY_WIDTH_PIXELS / (double) captureBox.width;
+        double yScaleFactor = Config.DISPLAY_HEIGHT_PIXELS / (double) captureBox.height;
+        LOG.info(xScaleFactor + ", " + yScaleFactor);
         double scaleFactor = Math.min(xScaleFactor, yScaleFactor);
 
         Runnable frameGrabber = () -> {
             Mat currFrame = new Mat();
+            String timestamp = null;
             String fileName = null;
 
             if (capture.isOpened()) {
                 try {
                     capture.read(currFrame);
-
-                    String imageFile = LocalDateTime.now()
+                    timestamp = LocalDateTime.now()
                             .format(DateTimeFormatter.ofPattern(Config.TIMESTAMP_FORMAT));
-                    fileName = Config.IMAGE_OUTPUT_DIRECTORY + imageFile + "." + Config.IMAGE_EXTENSION;
+                    fileName = Config.IMAGE_OUTPUT_DIRECTORY + timestamp + "." + Config.IMAGE_EXTENSION;
                 } catch (Exception e) {
-                    LOG.warn("Exception during the image elaboration: " + e);
+                    LOG.warn("Exception while reading frame: " + e);
                 }
             }
 
@@ -118,6 +100,7 @@ public class MotionDetector extends Observable {
             currFrame = currFrame.submat(captureBox);
 
             if (prevFrame == null || !prevFrame.size().equals(currFrame.size())) {
+                // This is the first frame of the current capture, and there is no previous frame to diff against
                 prevFrame = currFrame;
                 return;
             }
@@ -130,68 +113,68 @@ public class MotionDetector extends Observable {
             double diffFrameIntensitySum = moments.m00;
             Point centroid = new Point(moments.m10 / diffFrameIntensitySum, moments.m01 / diffFrameIntensitySum);
 
-            if (diffFrameIntensitySum > detectionToleranceSliderValue) {
-                trainDetected = true;
-                if (!calibrating) {
-                    trainDetectedFrames = Math.min(trainDetectedFrames + 1, 3);
-                    if (!trackingCentroids && trainDetectedFrames == 3) {
-                        trackingCentroids = true;
-                    }
-                }
-            } else {
-                trainDetected = false;
-                if (!calibrating) {
-                    trainDetectedFrames = Math.max(trainDetectedFrames - 1, 0);
-                    if (trackingCentroids && trainDetectedFrames == 0) {
-                        // calculate direction
-                        int direction = 0;
-                        for (int i = 1; i < centroidList.size(); i++) {
-                            if (Double.isNaN(centroidList.get(i - 1)) || Double.isNaN(centroidList.get(i))) {
-                                LOG.debug(fileName + ": skipping NaN calc");
-                                continue;
-                            }
-                            if (centroidList.get(i) > centroidList.get(i - 1)) {
-                                direction++;
-                            } else {
-                                direction--;
-                            }
-                        }
-                        String dir = direction > 0 ? "East" : "West";
-                        LOG.info(fileName + ": Train detected moving " + dir);
-                        trackingCentroids = false;
-                        centroidList = new ArrayList<>();
-                    }
-                }
-            }
-
-            if (!calibrating && trackingCentroids) {
-                centroidList.add(centroid.x);
-            }
-
-
-            if (!calibrating && trainDetected) {
-                Imgcodecs.imwrite(fileName, currFrame);
-            }
-
-            if (!calibrating) {
-                LOG.debug(fileName + "," + String.valueOf(diffFrameIntensitySum) + ", " +
-                        String.valueOf(trainDetected) + ", " + String.valueOf(trainDetectedFrames) + ", " +
-                        String.valueOf(centroid.x) + "," + String.valueOf(centroid.y) + ", " +
-                        String.valueOf(trackingCentroids));
-            }
-
-            Core.bitwise_not(diffFrame, diffFrame);
-
             Mat displayFrame = new Mat();
-            Imgproc.cvtColor(diffFrame, displayFrame, COLOR_GRAY2BGR);
-            Imgproc.resize(displayFrame, displayFrame, new Size(scaleFactor * displayFrame.width(), scaleFactor * displayFrame.height()));
-            centroid.set(new double[]{scaleFactor * centroid.x, scaleFactor * centroid.y});
-            Imgproc.circle(displayFrame, centroid, 3, new Scalar(0, 0, 255), 4);
+            Core.bitwise_not(diffFrame, displayFrame);
+            Imgproc.cvtColor(displayFrame, displayFrame, COLOR_GRAY2BGR);
+            Imgproc.resize(displayFrame, displayFrame, new Size(scaleFactor * displayFrame.width(),
+                    scaleFactor * displayFrame.height()));
+
+            Point scaledCentroid = centroid;
+            scaledCentroid.set(new double[]{scaleFactor * scaledCentroid.x, scaleFactor * scaledCentroid.y});
+            Imgproc.circle(displayFrame, scaledCentroid, 3, RED, 4);
+
             Image imageToShow = Utils.mat2Image(displayFrame);
             setChanged();
             notifyObservers(new FrameData(imageToShow, trainDetected, diffFrameIntensitySum));
 
             prevFrame = currFrame;
+
+            if (calibrating) {
+                return;
+            }
+
+            if (diffFrameIntensitySum > detectionToleranceSliderValue) {
+                trainDetected = true;
+                trainDetectedFrames = Math.min(trainDetectedFrames + 1, 3);
+                if (!trackingCentroids && trainDetectedFrames == 3) {
+                    trackingCentroids = true;
+                }
+            } else {
+                trainDetected = false;
+                trainDetectedFrames = Math.max(trainDetectedFrames - 1, 0);
+                if (trackingCentroids && trainDetectedFrames == 0) {
+                    // calculate direction
+                    int direction = 0;
+                    for (int i = 1; i < centroidList.size(); i++) {
+                        if (Double.isNaN(centroidList.get(i - 1)) || Double.isNaN(centroidList.get(i))) {
+                            LOG.debug(timestamp + ": skipping NaN calc");
+                            continue;
+                        }
+                        if (centroidList.get(i) > centroidList.get(i - 1)) {
+                            direction++;
+                        } else {
+                            direction--;
+                        }
+                    }
+                    String dir = direction > 0 ? "East" : "West";
+                    LOG.info(timestamp + ": Train detected moving " + dir);
+                    trackingCentroids = false;
+                    centroidList = new ArrayList<>();
+                }
+            }
+
+            LOG.debug(timestamp + "," + String.valueOf(diffFrameIntensitySum) + ", " +
+                    String.valueOf(trainDetected) + ", " + String.valueOf(trainDetectedFrames) + ", " +
+                    String.valueOf(centroid.x) + "," + String.valueOf(centroid.y) + ", " +
+                    String.valueOf(trackingCentroids));
+
+            if (trainDetected) {
+                Imgcodecs.imwrite(fileName, currFrame);
+            }
+
+            if (trackingCentroids) {
+                centroidList.add(centroid.x);
+            }
         };
 
         timer = Executors.newSingleThreadScheduledExecutor();
@@ -199,22 +182,19 @@ public class MotionDetector extends Observable {
         timer.scheduleAtFixedRate(frameGrabber, 500, period, TimeUnit.MILLISECONDS);
     }
 
-    public void updateImageNew() {
+    public void showPreviewImage() {
         capture.open(Config.CAMERA_ID);
-        capture.set(CV_CAP_PROP_FRAME_WIDTH, 1280);
-        capture.set(CV_CAP_PROP_FRAME_HEIGHT, 720);
+        capture.set(CV_CAP_PROP_FRAME_WIDTH, Config.DISPLAY_WIDTH_PIXELS);
+        capture.set(CV_CAP_PROP_FRAME_HEIGHT, Config.DISPLAY_HEIGHT_PIXELS);
 
         Mat frame = new Mat();
         try {
             capture.read(frame);
         } catch (Exception e) {
-            LOG.warn("Exception during the image elaboration: " + e);
+            LOG.warn("Exception while reading frame: " + e);
         }
 
-        if (true) {
-            Imgproc.rectangle(frame, point1, point2, new Scalar(0, 255, 0), 5);
-        }
-
+        Imgproc.rectangle(frame, point1, point2, GREEN, 5);
         Image imageToShow = Utils.mat2Image(frame);
         setChanged();
         notifyObservers(new FrameData(imageToShow));

@@ -1,5 +1,3 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
@@ -9,15 +7,33 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.text.Font?>
-<BorderPane prefHeight="1600.0" prefWidth="3000.0" xmlns="http://javafx.com/javafx/8"
-            xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.loganrouleau.traintracker.Controller">
+<BorderPane xmlns="http://javafx.com/javafx/8"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.loganrouleau.traintracker.controller.CameraController">
+    <top>
+        <Label fx:id="statusLabel" BorderPane.alignment="CENTER">
+            <BorderPane.margin>
+                <Insets top="20.0"/>
+            </BorderPane.margin>
+            <padding>
+                <Insets bottom="10.0" left="100.0" right="100.0" top="10.0"/>
+            </padding>
+            <font>
+                <Font size="24.0"/>
+            </font>
+        </Label>
+    </top>
+    <center>
+        <ImageView fx:id="imageView" onMouseClicked="#onMouseClicked" onMouseMoved="#onMouseMoved"/>
+    </center>
     <bottom>
         <HBox alignment="center">
             <padding>
                 <Insets bottom="25" left="25" right="25" top="25"/>
             </padding>
             <children>
-                <Button fx:id="captureButton" alignment="center" onAction="#onCaptureButton" text="Start Camera"/>
+                <Button fx:id="captureButton" alignment="center" onAction="#onCaptureButton"
+                        text="Start Camera"/>
                 <Label fx:id="motionLabel" text="Label">
                     <HBox.margin>
                         <Insets left="10.0" right="10.0"/>
@@ -32,19 +48,23 @@
                 <TextField fx:id="y1Text" prefHeight="25.0" prefWidth="70.0" promptText="y1"/>
                 <TextField fx:id="x2Text" prefHeight="25.0" prefWidth="70.0" promptText="x2"/>
                 <TextField fx:id="y2Text" prefHeight="25.0" prefWidth="70.0" promptText="y2"/>
-                <Slider fx:id="thresholdSlider" blockIncrement="2.0" majorTickUnit="50.0" max="255.0" minorTickCount="1"
+                <Slider fx:id="thresholdSlider" blockIncrement="2.0" majorTickUnit="50.0" max="255.0"
+                        minorTickCount="1"
                         prefWidth="140.0" showTickLabels="true" showTickMarks="true" value="20.0">
                     <HBox.margin>
                         <Insets left="10.0"/>
                     </HBox.margin>
                 </Slider>
-                <Slider fx:id="detectionToleranceSlider" blockIncrement="2000.0" majorTickUnit="25000.0" max="100000.0"
-                        minorTickCount="1" prefWidth="140.0" showTickLabels="true" showTickMarks="true" value="20000.0">
+                <Slider fx:id="detectionToleranceSlider" blockIncrement="2000.0" majorTickUnit="25000.0"
+                        max="100000.0"
+                        minorTickCount="1" prefWidth="140.0" showTickLabels="true" showTickMarks="true"
+                        value="20000.0">
                     <HBox.margin>
                         <Insets left="10.0"/>
                     </HBox.margin>
                 </Slider>
-                <Button fx:id="calibrateButton" mnemonicParsing="false" onAction="#onCalibrate" text="Calibrate">
+                <Button fx:id="calibrateButton" mnemonicParsing="false" onAction="#onCalibrate"
+                        text="Calibrate">
                     <HBox.margin>
                         <Insets left="10.0"/>
                     </HBox.margin>
@@ -52,20 +72,4 @@
             </children>
         </HBox>
     </bottom>
-    <center>
-        <ImageView fx:id="imageView" onMouseClicked="#onMouseClicked" onMouseMoved="#onMouseMoved"/>
-    </center>
-    <top>
-        <Label fx:id="statusLabel" BorderPane.alignment="CENTER">
-            <BorderPane.margin>
-                <Insets top="20.0"/>
-            </BorderPane.margin>
-            <padding>
-                <Insets bottom="10.0" left="100.0" right="100.0" top="10.0"/>
-            </padding>
-            <font>
-                <Font size="24.0"/>
-            </font>
-        </Label>
-    </top>
 </BorderPane>

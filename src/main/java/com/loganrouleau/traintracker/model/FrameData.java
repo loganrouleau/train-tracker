@@ -1,4 +1,4 @@
-package com.loganrouleau.traintracker;
+package com.loganrouleau.traintracker.model;
 
 import javafx.scene.image.Image;
 

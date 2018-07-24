@@ -1,5 +1,6 @@
 package com.loganrouleau.traintracker;
 
+import com.loganrouleau.traintracker.controller.BaseController;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -19,7 +20,7 @@ public class Main extends Application {
     @Override
     public void start(Stage primaryStage) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/train-tracker.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/loganrouleau/traintracker/view/base.fxml"));
             // store the root element so that the controllers can use it
             BorderPane rootElement = loader.load();
 
@@ -31,7 +32,7 @@ public class Main extends Application {
             primaryStage.show();
 
             // set the proper behavior on closing the application
-            Controller controller = loader.getController();
+            BaseController controller = loader.getController();
             primaryStage.setOnCloseRequest((windowEvent -> controller.onWindowCloseRequest()));
         } catch (Exception e) {
             LOG.error("Error starting application: " + e);

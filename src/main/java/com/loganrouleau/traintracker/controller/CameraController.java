@@ -1,5 +1,8 @@
-package com.loganrouleau.traintracker;
+package com.loganrouleau.traintracker.controller;
 
+import com.loganrouleau.traintracker.Config;
+import com.loganrouleau.traintracker.model.FrameData;
+import com.loganrouleau.traintracker.model.MotionDetector;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -22,13 +25,14 @@ import java.util.Observer;
  * implemented. It handles the button for starting/stopping the camera and the
  * acquired video stream.
  */
-public class Controller implements Observer {
-    private static final Logger LOG = LogManager.getLogger(Controller.class);
+public class CameraController extends BaseController implements Observer {
+    private static final Logger LOG = LogManager.getLogger(CameraController.class);
 
     private MotionDetector motionDetector;
     private MediaPlayer mediaPlayer;
     private boolean cameraActive = false;
 
+    // TODO: Make calibrate button shared among both views
     @FXML
     private Button captureButton;
     @FXML
@@ -96,6 +100,7 @@ public class Controller implements Observer {
         } else {
             // Start capture
             setBoundingBox();
+            // TODO: Make these adjustments update view live
             motionDetector.setThreshold(thresholdSlider.getValue());
             motionDetector.setDetectionTolerance(detectionToleranceSlider.getValue());
             cameraActive = true;

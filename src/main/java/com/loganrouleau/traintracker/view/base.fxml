@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.BorderPane?>
+<BorderPane prefHeight="1600.0" prefWidth="3000.0" xmlns="http://javafx.com/javafx/8"
+            xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.loganrouleau.traintracker.controller.BaseController">
+    <left>
+        <fx:include fx:id="leftCamera" source="camera.fxml"/>
+    </left>
+    <right>
+        <fx:include fx:id="rightCamera" source="camera.fxml"/>
+    </right>
+</BorderPane>

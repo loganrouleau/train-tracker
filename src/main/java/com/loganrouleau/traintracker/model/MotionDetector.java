@@ -1,5 +1,7 @@
-package com.loganrouleau.traintracker;
+package com.loganrouleau.traintracker.model;
 
+import com.loganrouleau.traintracker.Config;
+import com.loganrouleau.traintracker.Utils;
 import javafx.scene.image.Image;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

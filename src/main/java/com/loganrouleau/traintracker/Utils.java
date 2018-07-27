@@ -8,9 +8,6 @@ import org.opencv.core.Mat;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.List;
 
 /**
  * Provide general purpose methods for handling OpenCV-JavaFX data conversion.
@@ -54,17 +51,4 @@ public final class Utils {
         return image;
     }
 
-    public static void writeResultLine(FileWriter writer, List<String> values) {
-        StringBuilder sb = new StringBuilder();
-        for (String value : values) {
-            sb.append(value);
-            sb.append(",");
-        }
-        sb.replace(sb.length() - 1, sb.length(), "\n");
-        try {
-            writer.write(sb.toString());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 }

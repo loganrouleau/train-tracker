@@ -13,6 +13,11 @@ public class BaseController {
     @FXML
     private CameraController rightCameraController;
 
+    public void initialize() {
+        leftCameraController.init("LEFT");
+        rightCameraController.init("RIGHT");
+    }
+
     public void onWindowCloseRequest() {
         leftCameraController.onWindowCloseRequest();
         rightCameraController.onWindowCloseRequest();

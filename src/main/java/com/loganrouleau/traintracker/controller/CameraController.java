@@ -3,6 +3,7 @@ package com.loganrouleau.traintracker.controller;
 import com.loganrouleau.traintracker.Config;
 import com.loganrouleau.traintracker.model.FrameData;
 import com.loganrouleau.traintracker.model.MotionDetector;
+import com.loganrouleau.traintracker.model.ResultWriter;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -58,10 +59,15 @@ public class CameraController extends BaseController implements Observer {
     @FXML
     private TextField y2Text;
 
+    //TODO: Is the empty initialize method required?
     @FXML
     public void initialize() {
+    }
+
+    public void init(String location) {
         motionDetector = new MotionDetector();
         motionDetector.addObserver(this);
+        motionDetector.setLocation(location);
         Media sound = new Media(Paths.get("C:\\Users\\lroul\\projects\\train-tracker\\src\\main\\resources\\camera-click.wav").toUri().toString());
         mediaPlayer = new MediaPlayer(sound);
         x1Text.setText(String.valueOf(0));
@@ -115,6 +121,7 @@ public class CameraController extends BaseController implements Observer {
     public void onWindowCloseRequest() {
         mediaPlayer.stop();
         motionDetector.stopAcquisition();
+        ResultWriter.getInstance().close();
     }
 
     private void updateImage() {

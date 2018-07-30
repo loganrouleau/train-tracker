@@ -35,6 +35,7 @@ public class MotionDetector extends Observable {
 
     private VideoCapture capture = new VideoCapture();
     private boolean calibrating = false;
+    private static int activeCaptures = 0;
     private String location;
 
     private ScheduledExecutorService timer;
@@ -77,10 +78,12 @@ public class MotionDetector extends Observable {
         detectionToleranceSliderValue = detectionTolerance;
     }
 
-    public void capture() {
-        capture.open(Config.CAMERA_ID);
-        capture.set(CV_CAP_PROP_FRAME_WIDTH, Config.DISPLAY_WIDTH_PIXELS);
-        capture.set(CV_CAP_PROP_FRAME_HEIGHT, Config.DISPLAY_HEIGHT_PIXELS);
+    public synchronized void capture() {
+        if (activeCaptures == 0) {
+            capture.open(Config.CAMERA_ID);
+            capture.set(CV_CAP_PROP_FRAME_WIDTH, Config.DISPLAY_WIDTH_PIXELS);
+            capture.set(CV_CAP_PROP_FRAME_HEIGHT, Config.DISPLAY_HEIGHT_PIXELS);
+        }
 
         Rect captureBox = new Rect(point1, point2);
         double xScaleFactor = Config.DISPLAY_WIDTH_PIXELS / (double) captureBox.width;
@@ -191,12 +194,15 @@ public class MotionDetector extends Observable {
         timer = Executors.newSingleThreadScheduledExecutor();
         long period = Long.divideUnsigned(1000, Config.FRAMES_PER_SECOND);
         timer.scheduleAtFixedRate(frameGrabber, 500, period, TimeUnit.MILLISECONDS);
+        activeCaptures++;
     }
 
-    public void showPreviewImage() {
-        capture.open(Config.CAMERA_ID);
-        capture.set(CV_CAP_PROP_FRAME_WIDTH, Config.DISPLAY_WIDTH_PIXELS);
-        capture.set(CV_CAP_PROP_FRAME_HEIGHT, Config.DISPLAY_HEIGHT_PIXELS);
+    public synchronized void showPreviewImage() {
+        if (activeCaptures == 0) {
+            capture.open(Config.CAMERA_ID);
+            capture.set(CV_CAP_PROP_FRAME_WIDTH, Config.DISPLAY_WIDTH_PIXELS);
+            capture.set(CV_CAP_PROP_FRAME_HEIGHT, Config.DISPLAY_HEIGHT_PIXELS);
+        }
 
         Mat frame = new Mat();
         try {
@@ -214,17 +220,18 @@ public class MotionDetector extends Observable {
     /**
      * Stop the acquisition from the camera and release all the resources
      */
-    public void stopAcquisition() {
+    public synchronized void stopAcquisition(boolean forceStop) {
+        activeCaptures--;
+        if ((capture.isOpened() && activeCaptures == 0) || forceStop) {
+            capture.release();
+        }
+
         if (timer != null && !timer.isShutdown()) {
             try {
                 timer.shutdownNow();
             } catch (SecurityException e) {
                 LOG.warn("Exception in stopping the frame capture, trying to release the camera now... " + e);
             }
-        }
-
-        if (capture.isOpened()) {
-            capture.release();
         }
     }
 }

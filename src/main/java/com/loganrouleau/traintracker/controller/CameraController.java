@@ -102,7 +102,7 @@ public class CameraController extends BaseController implements Observer {
             // If already active, stop the capture
             cameraActive = false;
             captureButton.setText("Start Camera");
-            motionDetector.stopAcquisition();
+            motionDetector.stopAcquisition(false);
         } else {
             // Start capture
             setBoundingBox();
@@ -120,7 +120,7 @@ public class CameraController extends BaseController implements Observer {
      */
     public void onWindowCloseRequest() {
         mediaPlayer.stop();
-        motionDetector.stopAcquisition();
+        motionDetector.stopAcquisition(true);
         ResultWriter.getInstance().close();
     }
 

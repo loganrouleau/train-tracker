@@ -19,7 +19,6 @@ import org.opencv.videoio.VideoCapture;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Observable;
 import java.util.concurrent.Executors;
@@ -169,18 +168,15 @@ public class MotionDetector extends Observable {
                     }
                     String dir = direction > 0 ? "East" : "West";
                     LOG.info(timestamp + ": Train detected moving " + dir);
-                    ResultWriter.getInstance().writeResultLine(Arrays.asList(timestamp, dir, location,
-                            String.valueOf(thresholdSliderValue), String.valueOf(detectionToleranceSliderValue)));
+                    ResultWriter.getInstance().writeResultLine(timestamp, location, thresholdSliderValue,
+                            detectionToleranceSliderValue, dir);
 
                     trackingCentroids = false;
                     centroidList = new ArrayList<>();
                 }
             }
-
-            LOG.debug(timestamp + "," + String.valueOf(diffFrameIntensitySum) + ", " +
-                    String.valueOf(trainDetected) + ", " + String.valueOf(trainDetectedFrames) + ", " +
-                    String.valueOf(centroid.x) + "," + String.valueOf(centroid.y) + ", " +
-                    String.valueOf(trackingCentroids));
+            LOG.debug(String.format("%s, %.0f, %b, %d, %.1f, %.1f, %b", timestamp, diffFrameIntensitySum, trainDetected,
+                    trainDetectedFrames, centroid.x, centroid.y, trackingCentroids));
 
             if (trainDetected) {
                 Imgcodecs.imwrite(fileName, currFrame);

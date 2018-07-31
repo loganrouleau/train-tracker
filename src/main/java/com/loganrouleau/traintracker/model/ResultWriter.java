@@ -6,22 +6,20 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.List;
 
 public class ResultWriter {
     private static ResultWriter resultWriter = new ResultWriter();
     private static FileWriter fileWriter;
+    private static final String RESULT_LINE_FORMAT = "%n%s,%s,%.0f,%.0f,%s";
 
     static {
         try {
             fileWriter = new FileWriter("C:\\Users\\lroul\\projects\\train-tracker\\results\\" + LocalDateTime.now().format(DateTimeFormatter.ofPattern(Config.TIMESTAMP_FORMAT)) + ".csv");
+            fileWriter.write(String.format("%s,%s,%s,%s,%s", "Timestamp", "Location", "Threshold Slider Value",
+                    "Detection Tolerance Slider Value", "Direction"));
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        resultWriter.writeResultLine(Arrays.asList("Timestamp", "Location", "Direction", "Threshold Slider Value",
-                "Detection Tolerance Slider Value"));
     }
 
     private ResultWriter() {
@@ -31,15 +29,11 @@ public class ResultWriter {
         return resultWriter;
     }
 
-    public void writeResultLine(List<String> values) {
-        StringBuilder sb = new StringBuilder();
-        for (String value : values) {
-            sb.append(value);
-            sb.append(",");
-        }
-        sb.replace(sb.length() - 1, sb.length(), "\n");
+    public void writeResultLine(String timestamp, String location, double thresholdValue, double detectionValue,
+                                String direction) {
         try {
-            fileWriter.write(sb.toString());
+            fileWriter.write(String.format(RESULT_LINE_FORMAT, timestamp, location, thresholdValue, detectionValue,
+                    direction));
         } catch (IOException e) {
             e.printStackTrace();
         }

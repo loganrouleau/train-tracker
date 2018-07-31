@@ -74,6 +74,11 @@ public class CameraController extends BaseController implements Observer {
         y1Text.setText(String.valueOf(0));
         x2Text.setText(String.valueOf(Config.DISPLAY_WIDTH_PIXELS));
         y2Text.setText(String.valueOf(Config.DISPLAY_HEIGHT_PIXELS));
+
+        thresholdSlider.valueProperty().addListener((observable, oldValue, newValue) ->
+                motionDetector.setThreshold(thresholdSlider.getValue()));
+        detectionToleranceSlider.valueProperty().addListener((observable, oldValue, newValue) ->
+                motionDetector.setDetectionTolerance(detectionToleranceSlider.getValue()));
         updateImage();
     }
 
@@ -106,9 +111,6 @@ public class CameraController extends BaseController implements Observer {
         } else {
             // Start capture
             setBoundingBox();
-            // TODO: Make these adjustments update view live
-            motionDetector.setThreshold(thresholdSlider.getValue());
-            motionDetector.setDetectionTolerance(detectionToleranceSlider.getValue());
             cameraActive = true;
             captureButton.setText("Stop Camera");
             motionDetector.capture();

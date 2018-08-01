@@ -44,6 +44,7 @@ public class CameraController extends BaseController implements Observer {
     private Slider detectionToleranceSlider;
     @FXML
     private ImageView imageView;
+    // TODO: Use more descriptive label names
     @FXML
     private Label statusLabel;
     @FXML
@@ -89,7 +90,7 @@ public class CameraController extends BaseController implements Observer {
 
     @FXML
     public void onMouseMoved(MouseEvent mouseEvent) {
-        label.setText("x: " + mouseEvent.getX() + " y: " + mouseEvent.getY());
+        label.setText(String.format("x: %.0f y: %.0f", mouseEvent.getX(), mouseEvent.getY()));
     }
 
     @FXML
@@ -144,7 +145,7 @@ public class CameraController extends BaseController implements Observer {
             FrameData frameData = (FrameData) arg;
 
             Platform.runLater(() -> imageView.imageProperty().set(frameData.getImage()));
-            Platform.runLater(() -> motionLabel.setText("Diff sum: " + frameData.getDiffFrameIntensitySum()));
+            Platform.runLater(() -> motionLabel.setText(String.format("diffSum: %.0f", frameData.getDiffFrameIntensitySum())));
 
             if (frameData.isTrainDetected()) {
                 Platform.runLater(() -> statusLabel.setText("Train detected!"));

@@ -11,13 +11,12 @@ import java.awt.image.DataBufferByte;
 
 /**
  * Provide general purpose methods for handling OpenCV-JavaFX data conversion.
- * Moreover, expose some "low level" methods for matching few JavaFX behavior.
  */
 public final class Utils {
     private static final Logger LOG = LogManager.getLogger(Utils.class);
 
     /**
-     * Convert a Mat object (OpenCV) in the corresponding Image for JavaFX
+     * Convert an OpenCV Mat object to the corresponding JavaFX Image.
      */
     public static Image mat2Image(Mat frame) {
         try {
@@ -30,9 +29,6 @@ public final class Utils {
 
     /**
      * Support for the {@link #mat2Image} method
-     *
-     * @param original the {@link Mat} object in BGR or grayscale
-     * @return the corresponding {@link BufferedImage}
      */
     private static BufferedImage matToBufferedImage(Mat original) {
         BufferedImage image = null;

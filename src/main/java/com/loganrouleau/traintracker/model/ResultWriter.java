@@ -7,6 +7,9 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
+/**
+ * Used by the model for data which is written directly to the output csv. Thread safe.
+ */
 public class ResultWriter {
     private static ResultWriter resultWriter = new ResultWriter();
     private static FileWriter fileWriter;

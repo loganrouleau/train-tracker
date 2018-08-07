@@ -11,12 +11,15 @@ import org.apache.logging.log4j.Logger;
 import org.opencv.core.Core;
 
 /**
- * The main class for a JavaFX application. It creates and handle the main
- * window with its resources (style, graphics, etc.).
+ * The JavaFX application main class. It creates and handles the display and its resources.
  */
 public class Main extends Application {
     private static final Logger LOG = LogManager.getLogger(Main.class);
 
+    /**
+     * The main entry point for the application, called on the JavaFX Application Thread after the
+     * {@link Application#init()} method returns.
+     */
     @Override
     public void start(Stage primaryStage) {
         try {

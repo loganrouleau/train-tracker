@@ -22,9 +22,7 @@ import java.util.Observable;
 import java.util.Observer;
 
 /**
- * The controller for our application, where the application logic is
- * implemented. It handles the button for starting/stopping the camera and the
- * acquired video stream.
+ * Handles requests for a single {@link ImageView}-camera pair, and feeds UI updates back to the camera view.
  */
 public class CameraController extends BaseController implements Observer {
     private static final Logger LOG = LogManager.getLogger(CameraController.class);
@@ -99,9 +97,6 @@ public class CameraController extends BaseController implements Observer {
         calibrateButton.setText(motionDetector.isCalibrating() ? "Stop" : "Calibrate");
     }
 
-    /**
-     * The action triggered by pushing the button on the GUI
-     */
     @FXML
     protected void onCaptureButton() {
         if (cameraActive) {
@@ -139,6 +134,9 @@ public class CameraController extends BaseController implements Observer {
                 Integer.parseInt(x2Text.getText()), Integer.parseInt(y2Text.getText()));
     }
 
+    /**
+     * Update the view when FrameData is received.
+     */
     @Override
     public void update(Observable o, Object arg) {
         try {

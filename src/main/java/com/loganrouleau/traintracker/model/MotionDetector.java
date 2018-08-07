@@ -2,6 +2,7 @@ package com.loganrouleau.traintracker.model;
 
 import com.loganrouleau.traintracker.Config;
 import com.loganrouleau.traintracker.Utils;
+import com.loganrouleau.traintracker.controller.CameraController;
 import javafx.scene.image.Image;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,6 +30,10 @@ import static org.opencv.imgproc.Imgproc.COLOR_GRAY2BGR;
 import static org.opencv.videoio.Videoio.CV_CAP_PROP_FRAME_HEIGHT;
 import static org.opencv.videoio.Videoio.CV_CAP_PROP_FRAME_WIDTH;
 
+/**
+ * Interacts with a camera device on request by a {@link CameraController}. The public methods are thread safe so that
+ * multiple controllers can read frames from the same device.
+ */
 public class MotionDetector extends Observable {
     private static final Logger LOG = LogManager.getLogger(MotionDetector.class);
 
@@ -49,8 +54,8 @@ public class MotionDetector extends Observable {
     private double thresholdSliderValue;
     private double detectionToleranceSliderValue;
 
-    private final Scalar GREEN = new Scalar(0, 255, 0);
-    private final Scalar RED = new Scalar(0, 0, 255);
+    private static final Scalar GREEN = new Scalar(0, 255, 0);
+    private static final Scalar RED = new Scalar(0, 0, 255);
 
     public void setLocation(String location) {
         this.location = location;
@@ -77,6 +82,12 @@ public class MotionDetector extends Observable {
         detectionToleranceSliderValue = detectionTolerance;
     }
 
+    /**
+     * The main capture loop, which uses OpenCV to process frames. Motion is detected by applying a frame difference
+     * threshold. The x-component of the image intensity centroid is compared with the previous frame and binned as
+     * positive or negative for a rough direction estimate. Once motion is no longer detected, the mode of the per-frame
+     * direction estimates is used as the overall direction for that motion event.
+     */
     public synchronized void capture() {
         if (activeCaptures == 0) {
             capture.open(Config.CAMERA_ID);
@@ -182,6 +193,7 @@ public class MotionDetector extends Observable {
                 Imgcodecs.imwrite(fileName, currFrame);
             }
 
+            // TODO: May be able to skip centroid calculation on frames where we aren't tracking centroids
             if (trackingCentroids) {
                 centroidList.add(centroid.x);
             }
@@ -193,6 +205,9 @@ public class MotionDetector extends Observable {
         activeCaptures++;
     }
 
+    /**
+     * Read a single frame.
+     */
     public synchronized void showPreviewImage() {
         if (activeCaptures == 0) {
             capture.open(Config.CAMERA_ID);
@@ -214,7 +229,7 @@ public class MotionDetector extends Observable {
     }
 
     /**
-     * Stop the acquisition from the camera and release all the resources
+     * Stop the acquisition from the camera and release all the resources.
      */
     public synchronized void stopAcquisition(boolean forceStop) {
         activeCaptures--;

@@ -2,6 +2,9 @@ package com.loganrouleau.traintracker.model;
 
 import javafx.scene.image.Image;
 
+/**
+ * A collection of metrics collected every frame by the model. This is passed to a controller to be used as desired.
+ */
 public class FrameData {
     private Image image;
     private boolean trainDetected;

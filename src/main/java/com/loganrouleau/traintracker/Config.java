@@ -9,6 +9,7 @@ import java.util.Properties;
 public class Config {
     private static final Logger LOG = LogManager.getLogger(Config.class);
 
+    // TODO: This config is unused
     public static double CAPTURE_DURATION_MINUTES;
     public static int FRAMES_PER_SECOND;
     public static String IMAGE_OUTPUT_DIRECTORY;

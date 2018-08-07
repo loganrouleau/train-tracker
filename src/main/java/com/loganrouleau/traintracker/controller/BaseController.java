@@ -3,6 +3,9 @@ package com.loganrouleau.traintracker.controller;
 import javafx.fxml.FXML;
 import javafx.scene.layout.BorderPane;
 
+/**
+ * Used to encapsulate multiple camera controllers.
+ */
 public class BaseController {
     @FXML
     private BorderPane leftCamera;
